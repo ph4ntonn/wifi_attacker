@@ -129,8 +129,8 @@ def collect_ap(package):
         if package.haslayer(Dot11Beacon) or package.haslayer(Dot11ProbeResp):
             print "detect package"
             ssid = get_ssid(package.getlayer(Dot11Elt).info)
-            bssid = package.addr3.lower()  # 确认是addr2还是addr3？
-            try:  # 信道获取不太懂，借鉴fluxion，具体参见协议包格式，thanks to fluxion！
+            bssid = package.addr3.lower()  
+            try:  # i get this part from fluxion,thanks to fluxion！It's really a masterpiece!
                 channel = str(ord(package[Dot11Elt:3].info))
             except:
                 dot11elt = package.getlayer(Dot11Elt, ID=61)
@@ -197,8 +197,8 @@ def Probe(package,ssid):
         if package.haslayer(Dot11ProbeResp) and ssid==get_ssid(package.getlayer(Dot11Elt).info):
             print "detect package"
             ssid = get_ssid(package.getlayer(Dot11Elt).info)
-            bssid = package.addr3.lower()  # 确认是addr2还是addr3？
-            try:  # 信道获取不太懂，借鉴fluxion，具体参见协议包格式，thanks to fluxion！
+            bssid = package.addr3.lower()  
+            try:  
                 channel = str(ord(package[Dot11Elt:3].info))
             except:
                 dot11elt = package.getlayer(Dot11Elt, ID=61)
