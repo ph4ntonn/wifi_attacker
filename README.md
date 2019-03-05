@@ -17,4 +17,4 @@ REMEMBER if you want to use this script!!!!
 
 In the end,if you also keen on the cyber security(including WEB,WIRELESS),welcome to add me in the QQ or just leave a message on github XD
 
-I am a noob of coding,but i will make an effort to take the next rung up!
+I am a noob of coding,but i will make an effort to take it up to the next level!
